@@ -244,23 +244,30 @@ describe("async functions and await expressions", function() {
     });
 
     it("in nested async function should propagate failure when returned", function() {
-      var rejection = new Error("rejection");
+      async function d() {
+        return Promise.resolve(1234);
+      }
+
+      async function e() {
+        return await d();
+      }
 
       async function f() {
-        return new Promise(function(resolve, reject) {
-          reject(rejection);
-        });
+        const result = await e();
+        if (result !== 1) {
+          throw new Error("boom");
+        }
       }
 
       async function g() {
-        const result = await f;
+        const result = await f();
         return result;
       }
 
       return g().then(function(result) {
         assert.ok(false, "should have been rejected");
       }, function(error) {
-        assert.strictEqual(error, rejection);
+        assert.equal(error.message, "boom");
       });
     });
   });
